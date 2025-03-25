@@ -153,30 +153,6 @@ export default async (interaction) => {
 			break
 		}
 
-		// Step 3: Handle existing channel selection
-		case 'existing-channel-selection': {
-			await step3HandleExistingChannelSelection(interaction)
-			break
-		}
-
-
-		// Step 1: Handle configuration mode change
-		case 'change-configuration-mode': {
-			const configModeMenu = step1CreateConfigModeSelectMenu()
-			const configModeMenuRow = new ActionRowBuilder().addComponents(configModeMenu)
-
-			// Preserve the current embed
-			const currentEmbed = interaction.message.embeds[0]
-
-			await interaction.update({
-				content: null,
-				embeds: [currentEmbed],
-				components: [configModeMenuRow]
-			})
-
-			logger.info(`Admin chose to change the configuration mode in guild: ${interaction.guild.name}`)
-			break
-		}
 
 		// Default case for unknown customId
 		default:
