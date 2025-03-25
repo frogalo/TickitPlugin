@@ -1,0 +1,56 @@
+{
+	"name": "robo-ticket",
+	"description": "A Discord ticketing system plugin for Robo.js",
+	"version": "0.2.0",
+	"type": "module",
+	"private": false,
+	"keywords": [
+		"bot",
+		"discord",
+		"discord.js",
+		"javascript",
+		"robo",
+		"robo.js",
+		"ticketing"
+	],
+	"main": ".robo/build/index.js",
+	"license": "MIT",
+	"author": "Jakub Urbański ivo.urbanski@gmail.com",
+	"files": [
+		".robo/",
+		"src/",
+		"LICENSE",
+		"README.md"
+	],
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org/"
+	},
+	"scripts": {
+		"build": "robo build plugin",
+		"dev": "robo build plugin --watch",
+		"lint": "npm run lint:eslint && npm run lint:style",
+		"lint:eslint": "eslint -c config/eslint.mjs .",
+		"lint:style": "prettier --write .",
+		"prepublishOnly": "robo build plugin"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.22.0",
+		"discord.js": "^14.18.0",
+		"eslint": "^9.22.0",
+		"globals": "^16.0.0",
+		"prettier": "^3.5.3",
+		"robo.js": "^0.10.30"
+	},
+	"peerDependencies": {
+		"robo.js": "^0.10.1"
+	},
+	"peerDependenciesMeta": {
+		"robo.js": {
+			"optional": false
+		}
+	},
+	"dependencies": {
+		"mongoose": "^8.12.1"
+	}
+}
