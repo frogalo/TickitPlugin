@@ -1,12 +1,14 @@
 import { logger } from 'robo.js'
-import { ActionRowBuilder, RoleSelectMenuBuilder } from 'discord.js'
+import { ActionRowBuilder } from 'discord.js'
 import {
-	step1CreateConfigModeSelectMenu,
-	step2CreateRoleSelectMenu,
-	step3CreateChannelOptionsMenu,
-	step3CreateChannelInstructionEmbed,
 	step0HandleStartConfiguration,
-	step2CreateRoleInstructionEmbed
+	step1CreateConfigModeSelectMenu,
+	step2CreateRoleInstructionEmbed,
+	step2CreateRoleSelectMenu,
+	step3CreateChannelInstructionEmbed,
+	step3CreateChannelOptionsSelectMenu,
+	// step3HandleExistingChannel,
+	step3HandleNewChannel
 } from '../../../config/initialSetup.js'
 
 /**
@@ -21,7 +23,6 @@ export default async (interaction) => {
 		case 'start-configuration':
 			await step0HandleStartConfiguration(interaction)
 			break
-
 
 		// Step 1: Handle configuration mode selection
 		case 'configuration-mode': {
@@ -97,62 +98,59 @@ export default async (interaction) => {
 		}
 
 		// Step 2: Handle role selection
-		case 'role-selection':
-			{
-				const selectedRole = interaction.values[0]
-				const role = interaction.guild.roles.cache.get(selectedRole)
-				const roleName = role ? role.name : 'Unknown Role'
-
-				// Create role display menu
-				const roleDisplayMenu = new RoleSelectMenuBuilder()
-					.setCustomId('role-selection')
-					.setPlaceholder(`Selected Role: ${roleName}`)
-				const roleDisplayRow = new ActionRowBuilder().addComponents(roleDisplayMenu)
-
-				// Update the current message
-				await interaction.update({
-					content: null,
-					components: [roleDisplayRow]
-				})
-
-
-				try {
-					const messages = await interaction.channel.messages.fetch({ limit: 10 })
-					const step3Exists = messages.some((message) =>
-						message.embeds.some(
-							(embed) =>
-								embed.title === 'Step 3: Channel Setup' || (embed.data && embed.data.title === 'Step 3: Channel Setup')
-						)
+		case 'role-selection': {
+			try {
+				// Fetch recent messages to check if Step 3 already exists
+				const messages = await interaction.channel.messages.fetch({ limit: 10 })
+				const step3Exists = messages.some((message) =>
+					message.embeds.some(
+						(embed) =>
+							embed.title === 'Step 3: Channel Setup' || (embed.data && embed.data.title === 'Step 3: Channel Setup')
 					)
+				)
 
-					if (!step3Exists) {
-						const step3InstructionEmbed = step3CreateChannelInstructionEmbed()
-						const channelOptions = step3CreateChannelOptionsMenu()
-						const channelOptionsRow = new ActionRowBuilder().addComponents(channelOptions)
+				// If Step 3 doesn't exist, create it
+				if (!step3Exists) {
+					const step3InstructionEmbed = step3CreateChannelInstructionEmbed()
+					const channelOptions = step3CreateChannelOptionsSelectMenu()
+					const channelOptionsRow = new ActionRowBuilder().addComponents(channelOptions)
 
-						await interaction.channel.send({
-							embeds: [step3InstructionEmbed],
-							components: [channelOptionsRow]
-						})
+					await interaction.channel.send({
+						embeds: [step3InstructionEmbed],
+						components: [channelOptionsRow]
+					})
 
-						logger.info(`Created Step 3 for role ${roleName} in guild: ${interaction.guild.name}`)
-					} else {
-						logger.info(`Step 3 already exists, skipping creation in guild: ${interaction.guild.name}`)
-					}
-				} catch (error) {
-					logger.error('Error checking or sending Step 3 message:', error)
+					logger.info(`Created Step 3 for role in guild: ${interaction.guild.name}`)
+				} else {
+					logger.info(`Step 3 already exists, skipping creation in guild: ${interaction.guild.name}`)
 				}
+
+				// Acknowledge the interaction without modifying the original message
+				await interaction.deferUpdate()
+			} catch (error) {
+				logger.error('Error handling role selection:', error)
+				await interaction.reply({
+					content: '❌ An error occurred while processing your request. Please try again later.',
+					ephemeral: true
+				})
 			}
-
-			logger.info(`Admin selected role ${roleName} (${selectedRole}) in guild: ${interaction.guild.name}`)
-			break
-
-		// Step 3: Handle channel selection
-		case 'channel-selection': {
-			await step3HandleChannelSelection(interaction)
 			break
 		}
 
+		// Step 3: Handle channel selection
+		case 'channel-selection': {
+			await interaction.deferUpdate() // Acknowledge the interaction
+
+			if (interaction.values[0] === 'existing-channel') {
+				// // Handle "Use existing channel" option
+				// await handleChannelSelection(interaction)
+			} else if (interaction.values[0] === 'new-channel') {
+				// Handle "Create a new channel" option
+				await step3HandleNewChannel(interaction)
+			}
+
+			break
+		}
 
 		// Default case for unknown customId
 		default:

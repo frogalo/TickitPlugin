@@ -242,8 +242,13 @@ export function step3CreateChannelInstructionEmbed() {
 		.setTitle('Step 3: Channel Setup')
 		.setDescription(
 			'📁 **Where would you like tickets to be created?**\n\n' +
-				'You can choose to create a new dedicated channel for ticket creation or use an existing channel in your server. ' +
-				'This is where users will go to create tickets for support or other purposes.\n\n' +
+				'You have two options for setting up ticket creation:\n\n' +
+				'📝 **Create a new channel**:\n' +
+				'This option will create a dedicated channel named "🎫-create-a-ticket" in your server. ' +
+				'Users will use this channel to create tickets. It is ideal if you want a clean and organized setup.\n\n' +
+				'🔍 **Use an existing channel**:\n' +
+				'This option allows you to select an existing channel in your server where users can create tickets. ' +
+				'It is useful if you already have a channel for support or ticket-related purposes.\n\n' +
 				'Make sure the selected channel is accessible to your users and fits your server’s structure.\n\n' +
 				'Choose an option below to proceed.'
 		)
@@ -251,25 +256,120 @@ export function step3CreateChannelInstructionEmbed() {
 }
 
 /**
- * Creates the channel options menu for Step 3.
- * @returns {StringSelectMenuBuilder} The channel options menu.
+ * Creates the channel options select menu for Step 3.
+ * @returns {StringSelectMenuBuilder} The channel options select menu.
  */
-export function step3CreateChannelOptionsMenu() {
+export function step3CreateChannelOptionsSelectMenu() {
 	return new StringSelectMenuBuilder()
-		.setCustomId('channel-selection')
-		.setPlaceholder('Select Channel Option')
+		.setCustomId('channel-selection') // Custom ID for the menu
+		.setPlaceholder('Select Channel Option') // Placeholder text
 		.addOptions([
 			{
 				label: 'Create a new channel',
 				description: 'Create a dedicated "create-a-ticket" channel',
 				value: 'new-channel',
-				emoji: '📝'
+				emoji: '📝' // Add emoji for visual appeal
 			},
 			{
 				label: 'Use existing channel',
 				description: 'Select an existing channel for tickets',
 				value: 'existing-channel',
-				emoji: '🔍'
+				emoji: '🔍' // Add emoji for visual appeal
 			}
 		])
+}
+
+/**
+ * Handles the "Create a new channel" option for Step 3.
+ * @param {Object} interaction - The Discord interaction object.
+ */
+export async function step3HandleNewChannel(interaction) {
+	try {
+		// Check if the "Tickit" category exists
+		let tickitCategory = interaction.guild.channels.cache.find(
+			(channel) => channel.name === 'Tickit' && channel.type === ChannelType.GuildCategory
+		)
+
+		// If the category doesn't exist, create it
+		if (!tickitCategory) {
+			tickitCategory = await interaction.guild.channels.create({
+				name: 'Tickit',
+				type: ChannelType.GuildCategory
+			})
+			logger.info(`Created "Tickit" category in guild: ${interaction.guild.name}`)
+		}
+
+		// Check if the ticket channel already exists under the "Tickit" category
+		const existingTicketChannel = interaction.guild.channels.cache.find(
+			(channel) => channel.name === '🎫-create-a-ticket' && channel.parentId === tickitCategory.id
+		)
+
+		if (existingTicketChannel) {
+			// Notify the user that the channel already exists
+			const notificationMessage = await interaction.channel.send({
+				content: `⚠️ **The ticket channel already exists:** <#${existingTicketChannel.id}>`
+			})
+
+			// Remove the notification after 5 seconds
+			setTimeout(async () => {
+				try {
+					await notificationMessage.delete()
+					logger.info('Deleted notification message for existing ticket channel.')
+				} catch (error) {
+					logger.error('Error deleting notification message:', error)
+				}
+			}, 5000)
+
+			return
+		}
+
+		// Create the new ticket channel under the "Tickit" category
+		const newTicketChannel = await interaction.guild.channels.create({
+			name: '🎫-create-a-ticket',
+			type: ChannelType.GuildText,
+			parent: tickitCategory.id, // Set the parent to the "Tickit" category
+			permissionOverwrites: [
+				{
+					id: interaction.guild.roles.everyone.id,
+					allow: ['ViewChannel', 'SendMessages']
+				}
+			]
+		})
+
+		// Notify the user that the channel was created
+		const confirmationMessage = await interaction.channel.send({
+			content: `✅ **New ticket channel created:** <#${newTicketChannel.id}>`
+		})
+
+		// Remove the confirmation message after 5 seconds
+		setTimeout(async () => {
+			try {
+				await confirmationMessage.delete()
+				logger.info('Deleted confirmation message for new ticket channel.')
+			} catch (error) {
+				logger.error('Error deleting confirmation message:', error)
+			}
+		}, 5000)
+
+		logger.info(
+			`Created new ticket channel #${newTicketChannel.name} under "Tickit" category in guild: ${interaction.guild.name}`
+		)
+	} catch (error) {
+		logger.error('Error creating new ticket channel:', error)
+
+		// Notify the user of the error
+		const errorMessage = await interaction.channel.send({
+			content: '❌ **An error occurred while creating the ticket channel. Please try again later.**'
+		})
+
+		// Remove the error message after 4 seconds
+		setTimeout(async () => {
+			try {
+				await errorMessage.delete()
+				logger.info('Deleted error message for ticket channel creation failure.')
+			} catch (error) {
+				logger.error('Error deleting error message:', error)
+			}
+		}, 4000)
+	}
 }
