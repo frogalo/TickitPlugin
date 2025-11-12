@@ -5,7 +5,7 @@
  **/
 export default {
 	clientOptions: {
-		intents: ['Guilds', 'GuildMessages'] // Specify the intents your bot needs
+		intents: ['Guilds', 'GuildMessages', 'MessageContent'] // Specify the intents your bot needs
 	},
 	logger: {
 		level: 'info' // Set the logging level
