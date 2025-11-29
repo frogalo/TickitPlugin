@@ -3,7 +3,7 @@ import {
     StringSelectMenuBuilder,
     ActionRowBuilder
 } from 'discord.js'
-import { logger } from 'robo.js'
+import { logger, Flashcore } from 'robo.js'
 import { step2 } from './step2.js'
 
 export async function step1(channelOrInteraction, action, values = []) {
@@ -62,37 +62,21 @@ async function sendConfigurationModeSelection(channel) {
 }
 
 async function handleModeSelection(interaction, values) {
+    let isAutoSwitch = false
+
     if (values.includes('use-online-dashboard')) {
         await interaction.reply({
             content:
-                'The online dashboard functionality is coming soon. Please choose "Run Locally" for now.',
+                'The online dashboard functionality is coming soon. Automatically switching to "Run Locally" mode.',
             ephemeral: true
         })
-
-        const resetMenu = new StringSelectMenuBuilder()
-            .setCustomId('configuration-mode')
-            .setPlaceholder('Select Configuration Mode')
-            .addOptions([
-                {
-                    label: 'Run Locally',
-                    description: 'Keep everything local to your Discord server.',
-                    value: 'run-locally',
-                    emoji: '💻'
-                },
-                {
-                    label: 'Use Online Dashboard',
-                    description: 'Manage tickets via the online dashboard (coming soon).',
-                    value: 'use-online-dashboard',
-                    emoji: '🌐'
-                }
-            ])
-
-        const resetRow = new ActionRowBuilder().addComponents(resetMenu)
-        await interaction.message.edit({ components: [resetRow] })
-        return
+        isAutoSwitch = true
     }
 
-    if (values.includes('run-locally')) {
+    // Proceed if run-locally is selected OR if we are auto-switching
+    if (values.includes('run-locally') || isAutoSwitch) {
+        await Flashcore.set('configuration-mode', 'run-locally', { namespace: interaction.guildId })
+
         const updatedMenu = new StringSelectMenuBuilder()
             .setCustomId('configuration-mode')
             .setPlaceholder('Select Configuration Mode')
@@ -113,7 +97,14 @@ async function handleModeSelection(interaction, values) {
             ])
 
         const updatedRow = new ActionRowBuilder().addComponents(updatedMenu)
-        await interaction.update({ components: [updatedRow] })
+
+        if (isAutoSwitch) {
+            // If we already replied (ephemerally), we must use edit on the message
+            await interaction.message.edit({ components: [updatedRow] })
+        } else {
+            // Normal selection, update the interaction
+            await interaction.update({ components: [updatedRow] })
+        }
 
         const messages = await interaction.channel.messages.fetch({ limit: 10 })
         const step2Exists = messages.some((message) =>
@@ -131,5 +122,5 @@ async function handleModeSelection(interaction, values) {
         }
     }
 
-    logger.info(`Configuration mode updated: ${values.join(', ')}`)
+    logger.info(`Configuration mode updated: ${isAutoSwitch ? 'auto-switched to run-locally' : values.join(', ')}`)
 }

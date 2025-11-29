@@ -1,6 +1,8 @@
 // src/commands/ticket-add.js
 import { createCommandConfig, logger } from "robo.js";
 import { PermissionFlagsBits } from "discord.js";
+import { TICKET_CONFIG } from "../../../config/constants.js";
+
 
 export const config = createCommandConfig({
     description: "Add a user to the current ticket",
@@ -19,7 +21,7 @@ export default async (interaction) => {
     const targetUser = interaction.options.getUser("user");
 
     // Verify if this is a ticket channel
-    if (!channel.name.startsWith("ticket-")) {
+    if (!channel.name.startsWith(TICKET_CONFIG.CHANNEL_PREFIX)) {
         return interaction.reply({
             content: "This command can only be used in ticket channels!",
             ephemeral: true,

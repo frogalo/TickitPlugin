@@ -1,5 +1,6 @@
 import { ChannelType, PermissionFlagsBits } from 'discord.js'
 import { logger } from 'robo.js'
+import { TICKET_CONFIG } from '../config/constants.js'
 
 export const GUILD_TYPE = 'guild'
 export const INTERACTION_TYPE = 'interaction'
@@ -33,34 +34,34 @@ export async function initializeConfigurationChannel(guildOrInteraction, type) {
     try {
         // Create or get Tickit category
         let configurationCategory = guild.channels.cache.find(
-            (category) => category.name === 'Tickit' && category.type === ChannelType.GuildCategory
+            (category) => category.name === TICKET_CONFIG.CATEGORY_NAME && category.type === ChannelType.GuildCategory
         )
 
         if (!configurationCategory) {
-            logger.info('Creating "Tickit" category...')
+            logger.info(`Creating "${TICKET_CONFIG.CATEGORY_NAME}" category...`)
             configurationCategory = await guild.channels.create({
-                name: 'Tickit',
+                name: TICKET_CONFIG.CATEGORY_NAME,
                 type: ChannelType.GuildCategory
             })
-            logger.info('Successfully created the "Tickit" category.')
+            logger.info(`Successfully created the "${TICKET_CONFIG.CATEGORY_NAME}" category.`)
         } else {
-            logger.info('The "Tickit" category already exists.')
+            logger.info(`The "${TICKET_CONFIG.CATEGORY_NAME}" category already exists.`)
         }
 
         // Check if configuration channel already exists
         const existingChannel = guild.channels.cache.find(
-            (channel) => channel.name === 'configuration' && channel.type === ChannelType.GuildText
+            (channel) => channel.name === TICKET_CONFIG.CONFIGURATION_CHANNEL_NAME && channel.type === ChannelType.GuildText
         )
 
         if (existingChannel) {
-            logger.info(`The "configuration" channel already exists in guild: ${guildId}.`)
+            logger.info(`The "${TICKET_CONFIG.CONFIGURATION_CHANNEL_NAME}" channel already exists in guild: ${guildId}.`)
             return
         }
 
         // Create configuration channel
-        logger.info('Creating "configuration" channel...')
+        logger.info(`Creating "${TICKET_CONFIG.CONFIGURATION_CHANNEL_NAME}" channel...`)
         const configurationChannel = await guild.channels.create({
-            name: 'configuration',
+            name: TICKET_CONFIG.CONFIGURATION_CHANNEL_NAME,
             type: ChannelType.GuildText,
             parent: configurationCategory?.id,
             permissionOverwrites: [
@@ -70,7 +71,7 @@ export async function initializeConfigurationChannel(guildOrInteraction, type) {
                 }
             ]
         })
-        logger.info(`Successfully created the "configuration" channel in guild: ${guildId}.`)
+        logger.info(`Successfully created the "${TICKET_CONFIG.CONFIGURATION_CHANNEL_NAME}" channel in guild: ${guildId}.`)
 
         // Import step0 here to avoid circular imports
         const { step0 } = await import('./steps/step0.js')

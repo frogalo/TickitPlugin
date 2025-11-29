@@ -1,5 +1,5 @@
 import { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, ChannelType } from 'discord.js'
-import { logger } from 'robo.js'
+import { logger, Flashcore } from 'robo.js'
 import { step4 } from './step4.js'
 
 export async function step3(channelOrInteraction, action) {
@@ -120,17 +120,18 @@ async function handleCreateNewChannel(interaction) {
 				}
 			}, 5000)
 
-			// Check if Step 4 already exists
-			const messages = await configChannel.messages.fetch({ limit: 10 })
-			const step4Exists = messages.some((message) =>
-				message.embeds.some((embed) => embed.title === 'Step 4: Ticket Panel Setup')
+			await Flashcore.set('config-channel', configChannel.id, { namespace: guild.id })
+			await Flashcore.set('ticket-channel', existingTicketChannel.id, { namespace: guild.id })
+			// Check if ticket panel exists
+			const channelMessages = await existingTicketChannel.messages.fetch({ limit: 10 })
+			const ticketPanelExists = channelMessages.some((message) =>
+				message.embeds.some(
+					(embed) => embed.title === '🎫 Ticket Panel' || (embed.title && embed.title.includes('Ticket Panel'))
+				)
 			)
+			await Flashcore.set('ticket-panel-exists', ticketPanelExists, { namespace: guild.id })
 
-			if (!step4Exists) {
-				await step4(configChannel, 'check-panel', existingTicketChannel)
-			} else {
-				logger.info(`Step 4 already exists, skipping creation in guild: ${guild.name}`)
-			}
+			await step4(interaction, 'check-panel')
 
 			await interaction.deferUpdate()
 			return
@@ -163,17 +164,27 @@ async function handleCreateNewChannel(interaction) {
 		logger.info(`Created new ticket channel #${newTicketChannel.name} in guild: ${guild.name}`)
 
 		// Check if Step 4 already exists
-		const messages = await configChannel.messages.fetch({ limit: 10 })
-		const step4Exists = messages.some((message) =>
+		const configMessages = await configChannel.messages.fetch({ limit: 10 })
+		const step4Exists = configMessages.some((message) =>
 			message.embeds.some((embed) => embed.title === 'Step 4: Ticket Panel Setup')
 		)
 
-		if (!step4Exists) {
-			await step4(configChannel, 'check-panel', newTicketChannel)
-		} else {
-			logger.info(`Step 4 already exists, skipping creation in guild: ${guild.name}`)
-		}
+		// Always update Step 4, whether it exists or not
+		// Check if ticket panel exists (unlikely for new channel, but good practice)
+		const channelMessages = await newTicketChannel.messages.fetch({ limit: 10 })
+		const ticketPanelExists = channelMessages.some((message) =>
+			message.embeds.some(
+				(embed) => embed.title === '🎫 Ticket Panel' || (embed.title && embed.title.includes('Ticket Panel'))
+			)
+		)
 
+		await Flashcore.set('config-channel', configChannel.id, { namespace: guild.id })
+		await Flashcore.set('ticket-channel', newTicketChannel.id, { namespace: guild.id })
+		await Flashcore.set('ticket-panel-exists', ticketPanelExists, { namespace: guild.id })
+
+		// Always update Step 4, whether it exists or not
+		await step4(interaction, 'check-panel')
+		
 		await interaction.deferUpdate()
 		logger.info(`Channel created in guild: ${guild.name}`)
 	} catch (error) {
@@ -236,6 +247,7 @@ async function handleUseExisting(interaction) {
 	}
 }
 
+//todo: if step 4 already exists step 3 needs to cancel step 4
 async function handleChannelSelection(interaction) {
 	if (interaction.values[0] === 'cancel') {
 		const originalMenu = new StringSelectMenuBuilder()
@@ -291,16 +303,26 @@ async function handleChannelSelection(interaction) {
 		}, 5000)
 
 		// Check if Step 4 already exists
-		const messages = await configChannel.messages.fetch({ limit: 10 })
-		const step4Exists = messages.some((message) =>
+		const configMessages = await configChannel.messages.fetch({ limit: 10 })
+		const step4Exists = configMessages.some((message) =>
 			message.embeds.some((embed) => embed.title === 'Step 4: Ticket Panel Setup')
 		)
 
-		if (!step4Exists) {
-			await step4(configChannel, 'check-panel', selectedChannel)
-		} else {
-			logger.info(`Step 4 already exists, skipping creation in guild: ${interaction.guild.name}`)
-		}
+		// Always update Step 4, whether it exists or not
+		// Check if ticket panel exists
+		const channelMessages = await selectedChannel.messages.fetch({ limit: 10 })
+		const ticketPanelExists = channelMessages.some((message) =>
+			message.embeds.some(
+				(embed) => embed.title === '🎫 Ticket Panel' || (embed.title && embed.title.includes('Ticket Panel'))
+			)
+		)
+
+		await Flashcore.set('config-channel', configChannel.id, { namespace: interaction.guild.id })
+		await Flashcore.set('ticket-channel', selectedChannel.id, { namespace: interaction.guild.id })
+		await Flashcore.set('ticket-panel-exists', ticketPanelExists, { namespace: interaction.guild.id })
+
+		// Always update Step 4, whether it exists or not
+		await step4(interaction, 'check-panel')
 
 		await interaction.deferUpdate()
 		logger.info(`Selected existing channel #${selectedChannel.name} for tickets in guild: ${interaction.guild.name}`)

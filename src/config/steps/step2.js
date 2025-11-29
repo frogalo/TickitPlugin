@@ -1,5 +1,5 @@
 import { EmbedBuilder, RoleSelectMenuBuilder, ActionRowBuilder } from 'discord.js'
-import { logger } from 'robo.js'
+import { logger, Flashcore } from 'robo.js'
 import { step3 } from './step3.js'
 
 export async function step2(channelOrInteraction, action) {
@@ -45,6 +45,9 @@ async function sendRoleSelection(channel) {
 }
 
 async function handleRoleSelection(interaction) {
+    const roleId = interaction.values[0]
+    await Flashcore.set('ticket-manager-role', roleId, { namespace: interaction.guildId })
+
     const messages = await interaction.channel.messages.fetch({ limit: 10 })
     const step3Exists = messages.some((message) =>
         message.embeds.some((embed) => embed.title === 'Step 3: Channel Setup')
