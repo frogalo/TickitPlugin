@@ -5,6 +5,7 @@ import { step3 } from '../../../config/steps/step3.js'
 import { step4 } from '../../../config/steps/step4.js'
 import { logger, Flashcore } from 'robo.js'
 import { INTERACTION_IDS, CHANNEL_SELECTION_VALUES } from '../../../config/constants.js'
+import { createTicket, closeTicket } from '../../../utils/ticketUtils.js'
 
 /**
  * Main interaction handler for the bot
@@ -52,11 +53,12 @@ const buttonHandlers = {
 	},
 	[INTERACTION_IDS.CREATE_TICKET]: {
 		callback: async (interaction) => {
-			// TODO: Implement ticket creation logic
-			return interaction.reply({
-				content: '✅ Ticket creation would be handled here.',
-				ephemeral: true
-			})
+			await createTicket(interaction)
+		}
+	},
+	[INTERACTION_IDS.CLOSE_TICKET]: {
+		callback: async (interaction) => {
+			await closeTicket(interaction)
 		}
 	}
 }

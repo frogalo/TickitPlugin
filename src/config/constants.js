@@ -16,6 +16,8 @@ export const INTERACTION_IDS = {
     ROLE_SELECTION: 'role-selection',
     EDIT_TICKET_PANEL_MODAL: 'edit-ticket-panel-modal',
     EDIT_TICKET_PANEL_MODAL_PREFIX: 'edit-ticket-panel-modal',
+    CLOSE_TICKET: 'close-ticket',
+    CLAIM_TICKET: 'claim-ticket',
 };
 
 export const CHANNEL_SELECTION_VALUES = {
