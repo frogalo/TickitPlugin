@@ -1,27 +1,61 @@
-import { createCommandConfig, logger } from 'robo.js'
-import {initializeConfigurationChannel, INTERACTION_TYPE} from '../../../config/initialSetup.js'
+import { createCommandConfig, logger, Flashcore } from 'robo.js'
+import { EmbedBuilder } from 'discord.js'
 
-/*
- * Customize your command details and options here.
- *
- * For more information, see the documentation:
- * https://robojs.dev/discord-bots/commands#command-options
- */
-export const tickitconfig = createCommandConfig({
-	description: 'Creates configuration channel for Tickit Plugin!'
+export const config = createCommandConfig({
+	description: 'View current Tickit configuration'
 })
 
-/**
- * This is your command handler that will be called when the command is used.
- * You can either use the `interaction` Discord.js object directly, or return a string or object.
- *
- * For more information, see the documentation:
- * https://robojs.dev/discord-bots/commands
- */
 export default async (interaction) => {
-	if (interaction && interaction.guildId) {
-		await initializeConfigurationChannel(interaction, INTERACTION_TYPE);
-	} else {
-		logger.error('Interaction is not from a guild.');
+	try {
+		const guild = interaction.guild
+		const member = interaction.member
+		
+		// Check for Ticket Manager Role
+		const ticketManagerRoleId = await Flashcore.get('ticket-manager-role', { namespace: guild.id })
+		if (!ticketManagerRoleId || !member.roles.cache.has(ticketManagerRoleId)) {
+			return interaction.reply({
+				content: '❌ **You do not have permission to use this command.**',
+				ephemeral: true
+			})
+		}
+		
+		// Fetch configuration from Flashcore
+		const configChannelId = await Flashcore.get('config-channel', { namespace: guild.id })
+		const ticketChannelId = await Flashcore.get('ticket-channel', { namespace: guild.id })
+
+		const embed = new EmbedBuilder()
+			.setColor('5865F2')
+			.setTitle('⚙️ Tickit Configuration')
+			.setDescription('Current settings for the Tickit plugin. To change these, please go to the configuration channel.')
+			.addFields(
+				{ 
+					name: '👥 Ticket Manager Role', 
+					value: ticketManagerRoleId ? `<@&${ticketManagerRoleId}>` : '❌ Not Set', 
+					inline: true 
+				},
+				{ 
+					name: '⚙️ Config Channel', 
+					value: configChannelId ? `<#${configChannelId}>` : '❌ Not Set', 
+					inline: true 
+				},
+				{ 
+					name: '🎫 Ticket Channel', 
+					value: ticketChannelId ? `<#${ticketChannelId}>` : '❌ Not Set', 
+					inline: true 
+				}
+			)
+			.setFooter({ text: 'Powered by Tickit' })
+			.setTimestamp()
+
+		await interaction.reply({
+			embeds: [embed],
+			ephemeral: true
+		})
+	} catch (error) {
+		logger.error('Error fetching configuration:', error)
+		await interaction.reply({
+			content: '❌ An error occurred while fetching configuration.',
+			ephemeral: true
+		})
 	}
 }
