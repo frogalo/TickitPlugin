@@ -1,15 +1,15 @@
 <p align="center">✨ <strong>Generated with <a href="https://robojs.dev/create-robo">create-robo</a> magic!</strong> ✨</p>
 
-# 🚀 robo-ticket
+# robo-ticket
 
 Welcome to **robo-ticket**! This plugin is designed to seamlessly integrate with your existing **[Robo.js](https://robojs.dev)** project and provide a robust support ticket system. The best part? Everything automatically works once you install this plugin!
 
-- [📚 **Documentation:** Getting started with Robo.js](https://robojs.dev/discord-activities)
-- [✨ **Discord:** Robo - Imagine Magic](https://robojs.dev/discord)
+- [ **Documentation:** Getting started with Robo.js](https://robojs.dev/discord-activities)
+- [ **Discord:** Robo - Imagine Magic](https://robojs.dev/discord)
 
 > 👩‍💻 **Are you the plugin developer?** Check out the **[Development Guide](https://robojs.dev/plugins/create)** for instructions on how to develop, build, and publish this plugin.
 
-## Features ✨
+## Features
 
 - **Automated Setup**: Automatically creates a configuration channel when joining a server.
 - **Interactive Configuration**: Easy-to-use step-by-step setup for roles and channels.
@@ -17,7 +17,7 @@ Welcome to **robo-ticket**! This plugin is designed to seamlessly integrate with
 - **Role-Based Access**: Restrict admin capabilities to a designated "Ticket Manager" role.
 - **Flashcore Integration**: Persistent storage for configuration and ticket data.
 
-## Installation 💻
+## Installation
 
 To add this plugin to your **Robo.js** project:
 
@@ -31,7 +31,7 @@ New to **Robo.js**? Start your project with this plugin pre-installed:
 npx create-robo <project-name> -p robo-ticket
 ```
 
-## Setup ⚙️
+## Setup
 
 1.  **Invite the Bot**: Add your Robo to your Discord server.
 2.  **Auto-Configuration**: Upon joining, the bot will automatically create a private configuration channel (e.g., `#ticket-config`).
@@ -40,7 +40,7 @@ npx create-robo <project-name> -p robo-ticket
     - Set the **Ticket Channel** (where users will open tickets).
     - Create the **Ticket Panel**.
 
-## Usage 🎨
+## Usage
 
 ### For Users
 
@@ -53,7 +53,7 @@ npx create-robo <project-name> -p robo-ticket
 - **View Config**: Use `/tickitconfig` to see the current setup.
 - **List Commands**: Use `/commands` to see all available administrative commands.
 
-## Commands 📜
+## Commands
 
 | Command         | Description                                        | Permission           |
 | :-------------- | :------------------------------------------------- | :------------------- |
